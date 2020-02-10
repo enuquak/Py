@@ -1,0 +1,10 @@
+我是跟着别人的代码做的，但是在看到这个网站似乎依旧很久没人维护我就有点不详的预感了
+这个代码很令我惊讶的是居然直接用到了多线程
+由于调了很久的代码，所以特此记录
+以下记录这篇代码的坑点：
+1、给定的链接是错误的
+原：url = 'http://meizitu.com/a/more_{}.html'.format(cur_page)
+现：url = 'https://www.meizitu.com/a/list_1_{}.html'.format(cur_page)
+2.我发现get_pic总是有很多错误
+然后就重写了一下
+3.多进程真的有点吊，要好好学一下

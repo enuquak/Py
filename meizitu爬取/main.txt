@@ -1,0 +1,97 @@
+import os
+import threading
+import requests
+import bs4
+import time
+
+root_path = '/Users/zhouchongkai/Desktop/爬取到的meizitu'
+def creat_dir(name):
+    if not os.path.exists(name):
+        os.mkdir(name)
+
+def download_page(url):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"}
+    for i in range(100):
+        try:
+            r = requests.get(url, headers = headers)
+            r.encoding = 'gb2312'
+            r.raise_for_status()
+            return r.text
+        except:
+            continue
+
+def get_pic_list(html):
+    soup = bs4.BeautifulSoup(html, 'html.parser')
+    pic_list = soup.find_all('li', class_='wp-item')
+    for i in pic_list:
+        a_tag = i.find('h3', class_='tit').find('a')
+        link = a_tag.get('href')
+        text = a_tag.get_text()
+        get_pic(link, text)
+
+
+def get_r(url):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"}
+    for i in range(100):
+        try:
+            r = requests.get(url, headers = headers)
+            return r
+        except:
+            continue
+
+def get_pic(link, text):
+    #print("开始download")
+    html = download_page(link)
+    #print("download结束")
+    #print("开始解析")
+    soup = bs4.BeautifulSoup(html, 'html.parser')
+    #print("解析结束")
+    #print("提取img标签")
+    #pic_list = soup.find('div', id = 'picture').fin_all('img')
+    pic_list = soup.find('div', id="picture").find_all('img')
+    #print("img标签提取结束")
+    #print("展示img标签")
+    #headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"}
+    creat_dir(root_path + '/' + text)
+    the_pic_path = root_path + '/' + text
+    #print("开始提取图片")
+    for i in pic_list:
+        #print(i)
+        pic_link = i.get('src')
+        r = get_r(pic_link)
+        with open(the_pic_path + '/' + pic_link.split('/')[-1], 'wb') as f:
+            print("开始储存图片")
+            f.write(r.content)
+            time.sleep(1)
+            print("图片储存结束")
+
+def execute(url):
+    page_html = download_page(url)
+    get_pic_list(page_html)
+
+def main():
+    creat_dir('pic')
+    queue = [i for i in range(1, 72)]
+    threads = []
+    while len(queue) > 0:
+        for thread in threads:
+            if not thread.is_alive():
+                threads.remove(thread)
+        while len(threads) < 5 and len(queue) > 0:
+            cur_page = queue.pop(0)
+            url = 'https://www.meizitu.com/a/list_1_{}.html'.format(cur_page)
+            #https://www.meizitu.com/a/list_1_2.html
+            #https://www.meizitu.com/a/list_1_2.html
+            print(url)
+            thread = threading.Thread(target=execute, args = (url,))
+            thread.setDaemon(True)
+            thread.start()
+            print('{}正在下载{}页'.format(threading.current_thread().name, cur_page))
+            threads.append(thread)
+
+
+
+if __name__ == '__main__':
+    main()
+
+#get_pic('https://www.meizitu.com/a/5491.html', '破旧飞机也能玩出新花样')
